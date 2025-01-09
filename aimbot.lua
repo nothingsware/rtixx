@@ -84,35 +84,15 @@ local function CancelLock()
     end
 end
 
---// Modified GetClosestPlayer to respect TargetPlayer if set and avoid switching once locked
+--// Modified GetClosestPlayer to respect TargetPlayer if set
 local function GetClosestPlayer()
     local aimSettings = Environment.Settings
-
+    
     -- If user provided a TargetPlayer and toggling is enabled, try to lock ONLY that player
-    if aimSettings.Toggle and aimSettings.TargetPlayer and aimSettings.TargetPlayer ~= "" then
-        -- If already locked on a valid target, skip re-locking logic
-        if Environment.Locked then
-            -- Verify current lock is still valid
-            local character = Environment.Locked.Character
-            local lockPart = character and character:FindFirstChild(aimSettings.LockPart)
-            if lockPart then
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                if humanoid and (not aimSettings.AliveCheck or humanoid.Health > 0) then
-                    local viewportPos, onScreen = Camera:WorldToViewportPoint(lockPart.Position)
-                    if onScreen then
-                        local dist = (UserInputService:GetMouseLocation() - ConvertVector(viewportPos)).Magnitude
-                        if dist <= RequiredDistance then
-                            return  -- Still valid, so keep current lock
-                        end
-                    end
-                end
-            end
-            -- If not valid anymore, cancel lock and proceed to try relocking
-            CancelLock()
-        end
-
+    if aimSettings.Toggle and aimSettings.TargetPlayer ~= nil and aimSettings.TargetPlayer ~= "" then
         local target = Players:FindFirstChild(aimSettings.TargetPlayer)
         
+        -- If target is found and valid, do direct check
         if target and target.Character then
             local character = target.Character
             local lockPart = character:FindFirstChild(aimSettings.LockPart)
@@ -141,11 +121,21 @@ local function GetClosestPlayer()
                 if not onScreen then
                     return CancelLock()
                 end
+                
+                -- If we are already locked onto them, confirm FOV distance is still valid
+                if Environment.Locked == target then
+                    local dist = (UserInputService:GetMouseLocation() - ConvertVector(viewportPos)).Magnitude
+                    if dist > RequiredDistance then
+                        return CancelLock()
+                    end
+                else
+                    -- Lock onto them if not locked yet
+                    RequiredDistance = aimSettings.FOVSettings.Enabled 
+                        and aimSettings.FOVSettings.Amount 
+                        or 2000
+                    Environment.Locked = target
+                end
 
-                RequiredDistance = aimSettings.FOVSettings.Enabled 
-                    and aimSettings.FOVSettings.Amount 
-                    or 2000
-                Environment.Locked = target
             else
                 return CancelLock()
             end
@@ -153,10 +143,10 @@ local function GetClosestPlayer()
             return CancelLock()
         end
 
-        return  -- End processing for toggle-target mode
+        return  -- We are done if we had a target
     end
 
-    -- Normal logic for non-toggle or no specific target
+    -- Otherwise, normal "find closest in FOV" logic
     if not Environment.Locked then
         RequiredDistance = Environment.FOVSettings.Enabled
             and Environment.FOVSettings.Amount
@@ -209,20 +199,14 @@ local function GetClosestPlayer()
             end
         end
     else
-        -- Check if locked target is still valid
+
         local lockPart = Environment.Locked.Character 
             and Environment.Locked.Character:FindFirstChild(aimSettings.LockPart)
-        if lockPart then
-            local lockedPos = Camera:WorldToViewportPoint(lockPart.Position)
-            local dist = (UserInputService:GetMouseLocation() - ConvertVector(lockedPos)).Magnitude
-            if dist > RequiredDistance then
-                CancelLock()
-            end
-        else
+        if not lockPart then
             CancelLock()
         end
     end
-end
+    
 
 local function Load()
     OriginalSensitivity = UserInputService.MouseDeltaSensitivity
