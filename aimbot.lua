@@ -19,7 +19,7 @@ local MouseMoveRel      = mousemoverel
     or (Input and Input.MouseMove) -- Fallback for older exploit APIs
 
 --// Early out for re-execution checks
-if not getgenv().AirHub or getgenv().AirHub.Aimbot then
+if not getgenv().AirHub or not getgenv().AirHub.Aimbot then
     return
 end
 
@@ -84,15 +84,33 @@ local function CancelLock()
     end
 end
 
---// Modified GetClosestPlayer to respect TargetPlayer if set
+--// Modified GetClosestPlayer to respect TargetPlayer if set and avoid switching once locked
 local function GetClosestPlayer()
     local aimSettings = Environment.Settings
-    
+
     -- If user provided a TargetPlayer and toggling is enabled, try to lock ONLY that player
-    if aimSettings.Toggle and aimSettings.TargetPlayer ~= nil and aimSettings.TargetPlayer ~= "" then
+    if aimSettings.Toggle and aimSettings.TargetPlayer and aimSettings.TargetPlayer ~= "" then
+        -- If already locked on a valid target, skip re-locking logic
+        if Environment.Locked then
+            local character = Environment.Locked.Character
+            local lockPart = character and character:FindFirstChild(aimSettings.LockPart)
+            if lockPart then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid and (not aimSettings.AliveCheck or humanoid.Health > 0) then
+                    local viewportPos, onScreen = Camera:WorldToViewportPoint(lockPart.Position)
+                    if onScreen then
+                        local dist = (UserInputService:GetMouseLocation() - ConvertVector(viewportPos)).Magnitude
+                        if dist <= RequiredDistance then
+                            return  -- Still valid, so keep current lock
+                        end
+                    end
+                end
+            end
+            CancelLock()
+        end
+
         local target = Players:FindFirstChild(aimSettings.TargetPlayer)
         
-        -- If target is found and valid, do direct check
         if target and target.Character then
             local character = target.Character
             local lockPart = character:FindFirstChild(aimSettings.LockPart)
@@ -121,21 +139,11 @@ local function GetClosestPlayer()
                 if not onScreen then
                     return CancelLock()
                 end
-                
-                -- If we are already locked onto them, confirm FOV distance is still valid
-                if Environment.Locked == target then
-                    local dist = (UserInputService:GetMouseLocation() - ConvertVector(viewportPos)).Magnitude
-                    if dist > RequiredDistance then
-                        return CancelLock()
-                    end
-                else
-                    -- Lock onto them if not locked yet
-                    RequiredDistance = aimSettings.FOVSettings.Enabled 
-                        and aimSettings.FOVSettings.Amount 
-                        or 2000
-                    Environment.Locked = target
-                end
 
+                RequiredDistance = aimSettings.FOVSettings.Enabled 
+                    and aimSettings.FOVSettings.Amount 
+                    or 2000
+                Environment.Locked = target
             else
                 return CancelLock()
             end
@@ -143,7 +151,7 @@ local function GetClosestPlayer()
             return CancelLock()
         end
 
-        return  -- We are done if we had a target
+        return  -- End processing for toggle-target mode
     end
 
     -- Otherwise, normal "find closest in FOV" logic
@@ -285,7 +293,6 @@ local function Load()
             local isKeyboard = (inputObj.UserInputType == Enum.UserInputType.Keyboard)
             local isTriggerKey
 
-            -- If it's a single char (like "Q"), compare KeyCode as uppercase
             if isKeyboard and #triggerKey == 1 then
                 isTriggerKey = (inputObj.KeyCode == Enum.KeyCode[string_upper(triggerKey)])
             else
