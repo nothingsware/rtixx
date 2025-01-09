@@ -19,7 +19,7 @@ local MouseMoveRel      = mousemoverel
     or (Input and Input.MouseMove) -- Fallback for older exploit APIs
 
 --// Early out for re-execution checks
-if not getgenv().AirHub or getgenv().AirHub.Aimbot then
+if not getgenv().RTIIX or getgenv().RTIIX.Aimbot then
     return
 end
 
@@ -32,7 +32,7 @@ local OriginalSensitivity
 local Animation
 
 --// Setup Aimbot environment
-getgenv().AirHub.Aimbot = {
+getgenv().RTIIX.Aimbot = {
     Settings = {
         Enabled               = false,
         TeamCheck             = false,
@@ -65,7 +65,7 @@ getgenv().AirHub.Aimbot = {
     FOVCircle = DrawingNew("Circle")
 }
 
-local Environment = getgenv().AirHub.Aimbot
+local Environment = getgenv().RTIIX.Aimbot
 
 --// Utility Functions
 
@@ -346,8 +346,8 @@ function Environment.Functions:Exit()
     end
 
     Environment.FOVCircle:Remove()
-    getgenv().AirHub.Aimbot.Functions = nil
-    getgenv().AirHub.Aimbot = nil
+    getgenv().RTIIX.Aimbot.Functions = nil
+    getgenv().RTIIX.Aimbot = nil
 
     Load            = nil
     ConvertVector   = nil
