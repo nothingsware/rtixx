@@ -1,23 +1,52 @@
+local fileName = "AirHub_ExecutionCount.txt"
+
+local hasFileIO = (writefile and readfile and isfile)
+
+local currentCount = 0
+
+
+if hasFileIO then
+    if not isfile(fileName) then
+        writefile(fileName, "0")
+    end
+    local fileData = readfile(fileName)
+    currentCount = tonumber(fileData) or 0
+    currentCount += 1
+    writefile(fileName, tostring(currentCount))
+else
+    getgenv().executionCount = (getgenv().executionCount or 0) + 1
+    currentCount = getgenv().executionCount
+end
+
+
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
+
 local userName = LocalPlayer.Name
+
+
 local userId   = LocalPlayer.UserId
+local placeId  = game.PlaceId  
+local gameUrl  = "https://www.roblox.com/games/" .. tostring(placeId)
+
 local userThumbUrl = ("https://www.roblox.com/headshot-thumbnail/image?userId=%d&width=150&height=150&format=png"):format(userId)
 
 local requestFunction = syn and syn.request or http and http.request
 if not requestFunction then
-    warn("Your exploit does not support syn.request() or http.request()! Webhook feature won't work.")
+    warn("Your exploit does not support syn.request or http.request! Webhook feature won't work.")
 end
+
 
 local function sendToWebhook(count)
     local webhookURL = "https://discord.com/api/webhooks/1326732969573879828/Q-jM1N5kWsBsIFHlAmf-H4B-JW6sjbV7ng7Q_DvGZhsM1QAZp5XYblFl9BciyOeZ57nM"
 
     local data = {
+
         ["content"] = "**Script Executed!**",
 
-        ["username"] = "RTIIX Bot",
+        ["username"] = "AirHub Bot",
         ["avatar_url"] = "https://i.imgur.com/YaKaM5C.png",
 
         ["embeds"] = {
@@ -28,27 +57,31 @@ local function sendToWebhook(count)
                     ["icon_url"] = userThumbUrl
                 },
 
-          
-                ["title"] = "RTIIX Execution",
-                ["description"] = "Below is the updated execution count for the script.",
-                
-                ["color"] = 16776960, 
+                ["title"] = "AirHub Execution Report",
+                ["description"] = "Script was executed in this Roblox game. Below is the updated execution count.",
+
+                ["color"] = 16776960,  
 
                 ["fields"] = {
                     {
-                        ["name"] = "Total Executions (this session)",
+                        ["name"] = "Game / Place ID",
+                        ["value"] = string.format("**Place ID**: %d\n[Open Game](%s)", placeId, gameUrl),
+                        ["inline"] = false
+                    },
+                    {
+                        ["name"] = "Total Executions",
                         ["value"] = tostring(count),
                         ["inline"] = false
                     }
                 },
 
                 ["footer"] = {
-                    ["text"] = "Powered by Rtrix & Pepsi",
-                    ["icon_url"] = "https://i.imgur.com/AfFp7pu.png"
+                    ["text"] = "Powered by Brennen",
+                    ["icon_url"] = "https://github.com/nothingsware/rtixx/blob/main/logobot.png"
                 },
 
                 ["thumbnail"] = {
-                    ["url"] = "https://i.imgur.com/AfFp7pu.png"
+                    ["url"] = "https://github.com/nothingsware/rtixx/blob/main/logobot.png"
                 }
             }
         }
@@ -58,7 +91,9 @@ local function sendToWebhook(count)
         requestFunction({
             Url = webhookURL,
             Method = "POST",
-            Headers = { ["Content-Type"] = "application/json" },
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
             Body = HttpService:JSONEncode(data)
         })
     else
@@ -66,7 +101,11 @@ local function sendToWebhook(count)
     end
 end
 
-sendToWebhook(getgenv().executionCount)
+
+----------------------------
+-- Finally, Send to Webhook
+----------------------------
+sendToWebhook(currentCount)
 
 
 
