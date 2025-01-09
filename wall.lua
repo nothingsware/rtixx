@@ -1,6 +1,6 @@
 --[[
 
-	Wall Hack Module [RTIIX] by Exunys © CC0 1.0 Universal (2023)
+	Wall Hack Module [Airhub] by Exunys © CC0 1.0 Universal (2023)
 
 	https://github.com/Exunys
 
@@ -13,7 +13,7 @@ local WorldToViewportPoint, Vector2new, Vector3new, Vector3zero, CFramenew, Draw
 
 --// Launching checks
 
-if not getgenv().RTIIX or getgenv().RTIIX.WallHack then return end
+if not getgenv().Airhub or getgenv().Airhub.WallHack then return end
 
 --// Services
 
@@ -29,7 +29,7 @@ local ServiceConnections = {}
 
 --// Environment
 
-getgenv().RTIIX.WallHack = {
+getgenv().Airhub.WallHack = {
 	Settings = {
 		Enabled = false,
 		TeamCheck = false,
@@ -128,7 +128,7 @@ getgenv().RTIIX.WallHack = {
 	WrappedPlayers = {}
 }
 
-local Environment = getgenv().RTIIX.WallHack
+local Environment = getgenv().Airhub.WallHack
 
 --// Core Functions
 
@@ -866,8 +866,8 @@ function Environment.Functions:Exit()
 		end
 	end
 
-	getgenv().RTIIX.WallHack.Functions = nil
-	getgenv().RTIIX.WallHack = nil
+	getgenv().Airhub.WallHack.Functions = nil
+	getgenv().Airhub.WallHack = nil
 
 	Load = nil; GetPlayerTable = nil; AssignRigType = nil; InitChecks = nil; UpdateCham = nil; Visuals = nil; Wrap = nil; UnWrap = nil
 end
