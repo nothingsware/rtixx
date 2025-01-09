@@ -25,39 +25,34 @@ local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
 
 local userName = LocalPlayer.Name
-
-
 local userId   = LocalPlayer.UserId
 local placeId  = game.PlaceId  
 local gameUrl  = "https://www.roblox.com/games/" .. tostring(placeId)
 
-local userThumbUrl = ("https://www.roblox.com/headshot-thumbnail/image?userId=%d&width=150&height=150&format=png"):format(userId)
+local userThumbUrl = ("https://www.roblox.com/headshot-thumbnail/image?userId=%d&width=420&height=420&format=png"):format(userId)
 
 local requestFunction = syn and syn.request or http and http.request
 if not requestFunction then
     warn("Your exploit does not support syn.request or http.request! Webhook feature won't work.")
 end
 
-
 local function sendToWebhook(count)
     local webhookURL = "https://discord.com/api/webhooks/1326732969573879828/Q-jM1N5kWsBsIFHlAmf-H4B-JW6sjbV7ng7Q_DvGZhsM1QAZp5XYblFl9BciyOeZ57nM"
 
     local data = {
-
         ["content"] = "**Script Executed!**",
-
-        ["username"] = "AirHub Bot",
+        ["username"] = "Rtrix Bot",
         ["avatar_url"] = "https://raw.githubusercontent.com/nothingsware/rtixx/main/logobot.png",
 
         ["embeds"] = {
             {
                 ["author"] = {
                     ["name"] = "Executed by: " .. userName,
-                    ["url"] = "https://www.roblox.com/users/" .. userId .. "/profile",
+                    ["url"]  = "https://www.roblox.com/users/" .. userId .. "/profile",
                     ["icon_url"] = userThumbUrl
                 },
 
-                ["title"] = "AirHub Execution Report",
+                ["title"] = "Rtrix Execution",
                 ["description"] = "Script was executed in this Roblox game. Below is the updated execution count.",
 
                 ["color"] = 16776960,  
@@ -100,7 +95,6 @@ local function sendToWebhook(count)
         warn("Your exploit does not support syn.request() or http.request(). No data sent to webhook.")
     end
 end
-
 
 ----------------------------
 -- Finally, Send to Webhook
