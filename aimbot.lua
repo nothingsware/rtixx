@@ -88,9 +88,7 @@ end
 local function GetClosestPlayer()
     local aimSettings = Environment.Settings
 
-    -- If user provided a TargetPlayer and toggling is enabled, try to lock ONLY that player
     if aimSettings.Toggle and aimSettings.TargetPlayer and aimSettings.TargetPlayer ~= "" then
-        -- If already locked on a valid target, skip re-locking logic
         if Environment.Locked then
             local character = Environment.Locked.Character
             local lockPart = character and character:FindFirstChild(aimSettings.LockPart)
@@ -110,7 +108,6 @@ local function GetClosestPlayer()
         end
 
         local target = Players:FindFirstChild(aimSettings.TargetPlayer)
-        
         if target and target.Character then
             local character = target.Character
             local lockPart = character:FindFirstChild(aimSettings.LockPart)
@@ -120,29 +117,21 @@ local function GetClosestPlayer()
                 if aimSettings.TeamCheck and target.TeamColor == LocalPlayer.TeamColor then
                     return CancelLock()
                 end
-
                 if aimSettings.AliveCheck and humanoid.Health <= 0 then
                     return CancelLock()
                 end
-
                 if aimSettings.WallCheck then
-                    local obstructing = Camera:GetPartsObscuringTarget(
-                        {lockPart.Position},
-                        character:GetDescendants()
-                    )
+                    local obstructing = Camera:GetPartsObscuringTarget({lockPart.Position}, character:GetDescendants())
                     if #obstructing > 0 then
                         return CancelLock()
                     end
                 end
-
                 local viewportPos, onScreen = Camera:WorldToViewportPoint(lockPart.Position)
                 if not onScreen then
                     return CancelLock()
                 end
 
-                RequiredDistance = aimSettings.FOVSettings.Enabled 
-                    and aimSettings.FOVSettings.Amount 
-                    or 2000
+                RequiredDistance = aimSettings.FOVSettings.Enabled and aimSettings.FOVSettings.Amount or 2000
                 Environment.Locked = target
             else
                 return CancelLock()
@@ -151,65 +140,48 @@ local function GetClosestPlayer()
             return CancelLock()
         end
 
-        return  -- End processing for toggle-target mode
+        return
     end
 
-    -- Otherwise, normal "find closest in FOV" logic
     if not Environment.Locked then
-        RequiredDistance = Environment.FOVSettings.Enabled
-            and Environment.FOVSettings.Amount
-            or 2000
+        RequiredDistance = Environment.FOVSettings.Enabled and Environment.FOVSettings.Amount or 2000
 
         for _, player in next, Players:GetPlayers() do
-            if player == LocalPlayer then
-                continue
-            end
+            if player ~= LocalPlayer then
+                local character = player.Character
+                if character then
+                    local lockPart = character:FindFirstChild(aimSettings.LockPart)
+                    local humanoid = character:FindFirstChildOfClass("Humanoid")
 
-            local character = player.Character
-            if not character then
-                continue
-            end
+                    if lockPart and humanoid then
+                        if not (aimSettings.TeamCheck and player.TeamColor == LocalPlayer.TeamColor) 
+                        and not (aimSettings.AliveCheck and humanoid.Health <= 0) then
 
-            local lockPart = character:FindFirstChild(aimSettings.LockPart)
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
+                            local wallClear = true
+                            if aimSettings.WallCheck then
+                                local obstructing = Camera:GetPartsObscuringTarget({lockPart.Position}, character:GetDescendants())
+                                if #obstructing > 0 then
+                                    wallClear = false
+                                end
+                            end
 
-            if not lockPart or not humanoid then
-                continue
-            end
-
-            if aimSettings.TeamCheck and player.TeamColor == LocalPlayer.TeamColor then
-                continue
-            end
-
-            if aimSettings.AliveCheck and humanoid.Health <= 0 then
-                continue
-            end
-
-            if aimSettings.WallCheck then
-                local obstructing = Camera:GetPartsObscuringTarget(
-                    { lockPart.Position },
-                    character:GetDescendants()
-                )
-                if #obstructing > 0 then
-                    continue
+                            if wallClear then
+                                local viewportPos, onScreen = Camera:WorldToViewportPoint(lockPart.Position)
+                                if onScreen then
+                                    local distance = (UserInputService:GetMouseLocation() - ConvertVector(viewportPos)).Magnitude
+                                    if distance < RequiredDistance then
+                                        RequiredDistance = distance
+                                        Environment.Locked = player
+                                    end
+                                end
+                            end
+                        end
+                    end
                 end
-            end
-
-            local viewportPos, onScreen = Camera:WorldToViewportPoint(lockPart.Position)
-            if not onScreen then
-                continue
-            end
-
-            local distance = (UserInputService:GetMouseLocation() - ConvertVector(viewportPos)).Magnitude
-            if distance < RequiredDistance then
-                RequiredDistance = distance
-                Environment.Locked = player
             end
         end
     else
-        -- Check if locked target is still valid
-        local lockPart = Environment.Locked.Character 
-            and Environment.Locked.Character:FindFirstChild(aimSettings.LockPart)
+        local lockPart = Environment.Locked.Character and Environment.Locked.Character:FindFirstChild(aimSettings.LockPart)
         if lockPart then
             local lockedPos = Camera:WorldToViewportPoint(lockPart.Position)
             local dist = (UserInputService:GetMouseLocation() - ConvertVector(lockedPos)).Magnitude
@@ -226,7 +198,6 @@ local function Load()
     OriginalSensitivity = UserInputService.MouseDeltaSensitivity
 
     ServiceConnections.RenderSteppedConnection = RunService.RenderStepped:Connect(function()
-        -- Update FOV Circle visuals
         local fovSettings = Environment.FOVSettings
         local aimbotSettings = Environment.Settings
 
@@ -245,7 +216,6 @@ local function Load()
             Environment.FOVCircle.Visible = false
         end
 
-        -- If "running" (aimbot pressed), try to lock onto a target
         if Running and aimbotSettings.Enabled then
             GetClosestPlayer()
 
@@ -253,7 +223,6 @@ local function Load()
                 local lockedPart = Environment.Locked.Character:FindFirstChild(aimbotSettings.LockPart)
                 if lockedPart then
                     if aimbotSettings.ThirdPerson then
-                        -- Third-person lock uses mousemoverel
                         local lockedPos = Camera:WorldToViewportPoint(lockedPart.Position)
                         local mousePos  = UserInputService:GetMouseLocation()
                         local xDelta    = (lockedPos.X - mousePos.X) * aimbotSettings.ThirdPersonSensitivity
@@ -263,7 +232,6 @@ local function Load()
                             MouseMoveRel(xDelta, yDelta)
                         end
                     else
-                        -- First-person lock modifies camera CFrame
                         if aimbotSettings.Sensitivity > 0 then
                             Animation = TweenService:Create(
                                 Camera,
@@ -277,7 +245,6 @@ local function Load()
                         UserInputService.MouseDeltaSensitivity = 0
                     end
 
-                    -- Change FOV circle color while locked
                     Environment.FOVCircle.Color = fovSettings.LockedColor
                 else
                     CancelLock()
@@ -286,7 +253,6 @@ local function Load()
         end
     end)
 
-    -- Handle input began: toggle or hold to run
     ServiceConnections.InputBeganConnection = UserInputService.InputBegan:Connect(function(inputObj)
         if not Typing then
             local triggerKey = Environment.Settings.TriggerKey
@@ -315,7 +281,6 @@ local function Load()
         end
     end)
 
-    -- Handle input ended: stop if not toggle
     ServiceConnections.InputEndedConnection = UserInputService.InputEnded:Connect(function(inputObj)
         if not Typing then
             if not Environment.Settings.Toggle then
@@ -341,7 +306,6 @@ local function Load()
     end)
 end
 
---// Typing Check to avoid interfering while chatting
 ServiceConnections.TypingStartedConnection = UserInputService.TextBoxFocused:Connect(function()
     Typing = true
 end)
@@ -350,7 +314,6 @@ ServiceConnections.TypingEndedConnection = UserInputService.TextBoxFocusReleased
     Typing = false
 end)
 
---// Public Functions
 Environment.Functions = {}
 
 function Environment.Functions:Exit()
@@ -387,7 +350,7 @@ function Environment.Functions:ResetSettings()
         TriggerKey            = "MouseButton2",
         Toggle                = false,
         LockPart              = "Head",
-        TargetPlayer          = ""  -- Reset to empty
+        TargetPlayer          = ""
     }
 
     Environment.FOVSettings = {
@@ -409,5 +372,4 @@ setmetatable(Environment.Functions, {
     end
 })
 
---// Initialize
 Load()
