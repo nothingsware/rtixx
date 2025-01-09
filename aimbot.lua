@@ -19,7 +19,7 @@ local MouseMoveRel      = mousemoverel
     or (Input and Input.MouseMove) -- Fallback for older exploit APIs
 
 --// Early out for re-execution checks
-if not getgenv().RTIIX or getgenv().RTIIX.Aimbot then
+if not getgenv().RTIIX or not getgenv().RTIIX.Aimbot then
     return
 end
 
@@ -122,12 +122,9 @@ local function GetClosestPlayer()
                     return CancelLock()
                 end
                 
-                -- If we are already locked onto them, confirm FOV distance is still valid
+                -- Maintain persistent lock once acquired
                 if Environment.Locked == target then
-                    local dist = (UserInputService:GetMouseLocation() - ConvertVector(viewportPos)).Magnitude
-                    if dist > RequiredDistance then
-                        return CancelLock()
-                    end
+                    -- Do nothing; maintain lock without distance check
                 else
                     -- Lock onto them if not locked yet
                     RequiredDistance = aimSettings.FOVSettings.Enabled 
@@ -199,14 +196,15 @@ local function GetClosestPlayer()
             end
         end
     else
-
+        -- Check if locked target is still valid
         local lockPart = Environment.Locked.Character 
             and Environment.Locked.Character:FindFirstChild(aimSettings.LockPart)
         if not lockPart then
             CancelLock()
         end
+        -- Removed distance check to maintain lock persistently
     end
-    
+end
 
 local function Load()
     OriginalSensitivity = UserInputService.MouseDeltaSensitivity
