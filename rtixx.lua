@@ -47,7 +47,7 @@ local function sendToWebhook(count)
         ["content"] = "**Script Executed!**",
 
         ["username"] = "AirHub Bot",
-        ["avatar_url"] = "https://i.imgur.com/YaKaM5C.png",
+        ["avatar_url"] = "https://raw.githubusercontent.com/nothingsware/rtixx/main/logobot.png",
 
         ["embeds"] = {
             {
@@ -77,11 +77,11 @@ local function sendToWebhook(count)
 
                 ["footer"] = {
                     ["text"] = "Powered by Brennen",
-                    ["icon_url"] = "https://github.com/nothingsware/rtixx/blob/main/logobot.png"
+                    ["icon_url"] = "https://raw.githubusercontent.com/nothingsware/rtixx/main/logobot.png"
                 },
 
                 ["thumbnail"] = {
-                    ["url"] = "https://github.com/nothingsware/rtixx/blob/main/logobot.png"
+                    ["url"] = "https://raw.githubusercontent.com/nothingsware/rtixx/main/logobot.png"
                 }
             }
         }
