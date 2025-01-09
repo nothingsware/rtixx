@@ -86,7 +86,8 @@ local function GetClosestPlayer()
 				if Environment.Settings.AliveCheck and v.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
 				if Environment.Settings.WallCheck and #(Camera:GetPartsObscuringTarget({v.Character[Environment.Settings.LockPart].Position}, v.Character:GetDescendants())) > 0 then continue end
 
-				local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[Environment.Settings.LockPart].Position); Vector = ConvertVector(Vector)
+				local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[Environment.Settings.LockPart].Position)
+				Vector = ConvertVector(Vector)
 				local Distance = (UserInputService:GetMouseLocation() - Vector).Magnitude
 
 				if Distance < RequiredDistance and OnScreen then
@@ -95,9 +96,8 @@ local function GetClosestPlayer()
 				end
 			end
 		end
-	elseif (UserInputService:GetMouseLocation() - ConvertVector(Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position))).Magnitude > RequiredDistance then
-		CancelLock()
 	end
+	-- Removed distance-based cancellation logic to maintain lock once acquired.
 end
 
 local function Load()
